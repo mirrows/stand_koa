@@ -73,25 +73,142 @@
 
 
   <script>
-    class Behavior {
-      constructor () {
-        this.init()
-      }
+    // class Behavior {
+    //   constructor () {
+    //     this.init()
+    //   }
+    //   init() {
+    //     this.domCreateRoom = document.querySelector('.create_room')
+    //     this.domContentWrap = document.querySelector('.content_wrap')
+    //     this.domFile = null
+    //     this.domCreateRoom.onclick = this.show
+    //     onbeforeunload = () => {
+    //       console.log(this)
+    //       this.SSE?.close()
+    //       this.port && fetch('/send/clear', {
+    //         method: 'POST',
+    //         body: JSON.stringify({port: this.port})
+    //       })
+    //     }
+    //   }
+    //   show = () => {
+    //     if (typeof EventSource === "undefined") {
+    //       return alert('当前浏览器不支持大文件发送，请进行升级浏览器或使用其他浏览器打开')
+    //     }
+    //     console.log('show')
+    //     fetch('/send/create', {
+    //       method: 'POST'
+    //     }).then(res => res.json()).then(({ data }) => {
+    //       this.port = data.port
+    //       this.domCreateRoom.innerText = data.port
+    //       this.domFile = document.createElement('input')
+    //       this.domFile.type = 'file'
+    //       this.domCreateRoom.onclick = () => this.domFile.click()
+    //       this.domFile.onchange = this.selectFile
+    //       this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile)
+    //     })
+    //   }
+    //   selectFile = (e) => {
+    //     // console.log(e)
+    //     this.domContentWrap.innerHTML = ''
+    //     if (!this.domFile.files[0]) return
+    //     this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile))
+    //     if (!this.domSendBtn) {
+    //       this.domSendBtn = document.createElement('button')
+    //       this.domSendBtn.innerText = '发送'
+    //       this.domSendBtn.onclick = this.uploadFile
+    //     } else {
+    //       this.domSendBtn.removeAttribute('disabled')
+    //     }
+    //     if (!this.domFileName) {
+    //       this.domFileName = document.createElement('div')
+    //       this.domFileNameText = document.createElement('span')
+    //       this.domFileName.classList.add('file_name_wrap')
+    //       this.domFileNameText.classList.add('file_name_text')
+    //     }
+        
+    //     this.domFileName.style.background = 'linear-gradient(90deg, #000 0, #fff 0%)'
+    //     this.domFileNameText.innerText = this.domFile.files[0]?.name
+    //     this.domFileName.appendChild(this.domFileNameText)
+    //     this.domContentWrap.appendChild(this.domFileName)
+    //     this.domContentWrap.appendChild(this.domSendBtn)
+    //   }
+    //   uploadFile = async () => {
+    //     this.domSendBtn.setAttribute('disabled', true)
+    //     const chunks = await sliceFile(this.domFile.files[0])
+    //     this.tmpFiles || (this.tmpFiles = {})
+    //     this.tmpFiles[chunks[0].id] = chunks
+    //     console.log(chunks)
+    //     for(let i = 0; i < chunks.length; i++) {
+    //       const data = await fetch(`/send/uploadFile/${this.port}`, {
+    //         method: 'POST',
+    //         body: JSON.stringify(chunks[i])
+    //       }).then(res => res.json())
+    //       if(data.code) {
+    //         return alert('传输错误，请重试')
+    //       } else {
+    //         this.tmpFiles[chunks[0].id][i].loaded = true
+    //       }
+    //     }
+    //   }
+    //   receiveFile = ({data}) => {
+    //     const res = JSON.parse(data)
+    //     const fileEvents = {
+    //       start: this.startStoreFile,
+    //       msg: this.storeFile,
+    //       end: this.finishStoreFile
+    //     }
+    //     fileEvents[res.state]?.({sign: res.id, data: res})
+    //   }
+    //   files = {}
+    //   startStoreFile = ({sign}) => {
+    //     // 清理内存
+    //     this.files = {}
+
+    //     this.files[sign] = []
+    //   }
+    //   storeFile = ({sign, data}) => {
+    //     this.files[sign].push(data)
+    //     this.domFileName.style.background = `linear-gradient(90deg, #000 ${data.ind/data.total * 100}%, #fff ${data.ind/data.total * 100 + 10}%)`
+    //     this.domFileNameText.innerText = `${(data.ind/data.total * 100).toFixed(2)}%\n` + data.name
+    //   }
+    //   finishStoreFile = ({sign, data}) => {
+    //     this.files[sign].sort((a, b) => a.ind - b.ind)
+    //     const url = this.files[sign].map(chunk => chunk.content).join('')
+    //     const name = sign
+    //     this.domSendBtn?.remove()
+    //     if (!this.downLoadBtn) {
+    //       this.downLoadBtn = document.createElement('button')
+    //       this.downLoadBtn.innerText = '下载'
+    //     }
+    //     this.downLoadBtn.onclick = downloadFile.bind(this, {url, name})
+    //     this.domContentWrap.appendChild(this.downLoadBtn)
+    //     // downloadFile({url, name})
+    //   }
+      
+    // }
+
+    // new Behavior()
+
+
+    const Behavior = {
+      domCreateRoom: document.querySelector('.create_room'),
+      domContentWrap: document.querySelector('.content_wrap'),
+      domFile: null,
       init() {
-        this.domCreateRoom = document.querySelector('.create_room')
-        this.domContentWrap = document.querySelector('.content_wrap')
-        this.domFile = null
-        this.domCreateRoom.onclick = this.show
+        // this.domCreateRoom = document.querySelector('.create_room')
+        // this.domContentWrap = document.querySelector('.content_wrap')
+        // this.domFile = null
+        this.domCreateRoom.onclick = this.show.bind(this)
         onbeforeunload = () => {
-          console.log(this)
           this.SSE?.close()
           this.port && fetch('/send/clear', {
             method: 'POST',
             body: JSON.stringify({port: this.port})
           })
         }
-      }
-      show = () => {
+      },
+      show() {
         if (typeof EventSource === "undefined") {
           return alert('当前浏览器不支持大文件发送，请进行升级浏览器或使用其他浏览器打开')
         }
@@ -104,19 +221,19 @@
           this.domFile = document.createElement('input')
           this.domFile.type = 'file'
           this.domCreateRoom.onclick = () => this.domFile.click()
-          this.domFile.onchange = this.selectFile
-          this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile)
+          this.domFile.onchange = this.selectFile.bind(this)
+          this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
         })
-      }
-      selectFile = (e) => {
+      },
+      selectFile(e) {
         // console.log(e)
         this.domContentWrap.innerHTML = ''
         if (!this.domFile.files[0]) return
-        this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile))
+        this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this)))
         if (!this.domSendBtn) {
           this.domSendBtn = document.createElement('button')
           this.domSendBtn.innerText = '发送'
-          this.domSendBtn.onclick = this.uploadFile
+          this.domSendBtn.onclick = this.uploadFile.bind(this)
         } else {
           this.domSendBtn.removeAttribute('disabled')
         }
@@ -132,8 +249,8 @@
         this.domFileName.appendChild(this.domFileNameText)
         this.domContentWrap.appendChild(this.domFileName)
         this.domContentWrap.appendChild(this.domSendBtn)
-      }
-      uploadFile = async () => {
+      },
+      async uploadFile() {
         this.domSendBtn.setAttribute('disabled', true)
         const chunks = await sliceFile(this.domFile.files[0])
         this.tmpFiles || (this.tmpFiles = {})
@@ -150,29 +267,29 @@
             this.tmpFiles[chunks[0].id][i].loaded = true
           }
         }
-      }
-      receiveFile = ({data}) => {
+      },
+      receiveFile({data}) {
         const res = JSON.parse(data)
         const fileEvents = {
-          start: this.startStoreFile,
-          msg: this.storeFile,
-          end: this.finishStoreFile
+          start: this.startStoreFile.bind(this),
+          msg: this.storeFile.bind(this),
+          end: this.finishStoreFile.bind(this)
         }
         fileEvents[res.state]?.({sign: res.id, data: res})
-      }
-      files = {}
-      startStoreFile = ({sign}) => {
+      },
+      files: {},
+      startStoreFile({sign}) {
         // 清理内存
         this.files = {}
 
         this.files[sign] = []
-      }
-      storeFile = ({sign, data}) => {
+      },
+      storeFile({sign, data}) {
         this.files[sign].push(data)
         this.domFileName.style.background = `linear-gradient(90deg, #000 ${data.ind/data.total * 100}%, #fff ${data.ind/data.total * 100 + 10}%)`
         this.domFileNameText.innerText = `${(data.ind/data.total * 100).toFixed(2)}%\n` + data.name
-      }
-      finishStoreFile = ({sign, data}) => {
+      },
+      finishStoreFile({sign, data}) {
         this.files[sign].sort((a, b) => a.ind - b.ind)
         const url = this.files[sign].map(chunk => chunk.content).join('')
         const name = sign
@@ -184,12 +301,11 @@
         this.downLoadBtn.onclick = downloadFile.bind(this, {url, name})
         this.domContentWrap.appendChild(this.downLoadBtn)
         // downloadFile({url, name})
-      }
+      },
       
     }
 
-    new Behavior()
-
+    Behavior.init()
 
     const sliceFile = (file, size = 1024*50) => {
       return new Promise((resolve) => {

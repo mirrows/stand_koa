@@ -79,20 +79,103 @@
   </a>
 
   <script>
-    class Behavior {
-      constructor() {
-        this.init()
-      }
+    // class Behavior {
+    //   constructor() {
+    //     this.init()
+    //   }
+    //   init() {
+    //     this.domEnterRoom = document.querySelector('.enter_room')
+    //     this.domRoomNumInput = document.querySelector('.room_number_input')
+    //     this.domContentWrap = document.querySelector('.content_wrap')
+    //     this.domEnterRoom.onclick = this.enter
+    //     onbeforeunload = () => {
+    //       this.SSE?.close()
+    //     }
+    //   }
+    //   enter = async () => {
+    //     if (!this.domRoomNumInput.value) return
+    //     const result = await fetch('/receive/enter', {
+    //       method: 'POST',
+    //       body: JSON.stringify({port: this.domRoomNumInput.value})
+    //     }).then(res => res.json())
+    //     if(!result.data?.port) return alert('找不到端口')
+    //     this.port = result.data.port
+    //     this.domRoomNumInput.remove()
+    //     this.domEnterRoom.onclick = this.back
+    //     this.domEnterRoom.innerText = this.port
+    //     this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile)
+    //   }
+    //   back = () => {
+    //     this.domRoomNumInput = document.createElement('input')
+    //     this.domRoomNumInput.setAttribute('type', 'text')
+    //     this.domRoomNumInput.classList.add('room_number_input')
+    //     this.domEnterRoom.innerText = '进入房间'
+    //     this.domEnterRoom.onclick = this.enter
+    //     this.domContentWrap.parentNode.insertBefore(this.domRoomNumInput, this.domContentWrap)
+    //     this.domRoomNumInput.focus()
+    //   }
+    //   receiveFile = ({data}) => {
+    //     const res = JSON.parse(data)
+    //     const fileEvents = {
+    //       start: this.startStoreFile,
+    //       msg: this.storeFile,
+    //       end: this.finishStoreFile
+    //     }
+    //     fileEvents[res.state]?.({sign: res.id, data: res})
+    //   }
+    //   files = {}
+    //   startStoreFile = ({sign, data}) => {
+    //     this.domContentWrap.innerHTML = ''
+    //     // 清理内存
+    //     this.files = {}
+    //     this.files[sign] = []
+    //     if (!this.domFileName) {
+    //       this.domFileName = document.createElement('div')
+    //       this.domFileNameText = document.createElement('span')
+    //       this.domFileName.classList.add('file_name_wrap')
+    //       this.domFileNameText.classList.add('file_name_text')
+    //     }
+        
+    //     this.domFileName.style.background = 'linear-gradient(90deg, #000 0, #fff 10%)'
+    //     this.domFileNameText.innerText = `0%\n` + data.name
+    //     this.domFileName.appendChild(this.domFileNameText)
+    //     this.domContentWrap.appendChild(this.domFileName)
+    //   }
+    //   storeFile = ({sign, data}) => {
+    //     this.files[sign].push(data)
+    //     this.domFileName.style.background = `linear-gradient(90deg, #000 ${data.ind/data.total * 100}%, #fff ${data.ind/data.total * 100 + 10}%)`
+    //     this.domFileNameText.innerText = `${(data.ind/data.total * 100).toFixed(2)}%\n` + data.name
+    //   }
+    //   finishStoreFile = ({sign, data}) => {
+    //     this.files[sign].sort((a, b) => a.ind - b.ind)
+    //     const url = this.files[sign].map(chunk => chunk.content).join('')
+    //     const name = sign
+    //     this.domSendBtn?.remove()
+    //     if (!this.downLoadBtn) {
+    //       this.downLoadBtn = document.createElement('button')
+    //       this.downLoadBtn.innerText = '下载'
+    //     }
+    //     this.downLoadBtn.onclick = downloadFile.bind(this, {url, name})
+    //     this.domContentWrap.appendChild(this.downLoadBtn)
+    //     // downloadFile({url, name})
+    //   }
+      
+    // }
+
+    // new Behavior()
+
+
+    const behavior = {
       init() {
         this.domEnterRoom = document.querySelector('.enter_room')
         this.domRoomNumInput = document.querySelector('.room_number_input')
         this.domContentWrap = document.querySelector('.content_wrap')
-        this.domEnterRoom.onclick = this.enter
+        this.domEnterRoom.onclick = this.enter.bind(this)
         onbeforeunload = () => {
           this.SSE?.close()
         }
-      }
-      enter = async () => {
+      },
+      async enter() {
         if (!this.domRoomNumInput.value) return
         const result = await fetch('/receive/enter', {
           method: 'POST',
@@ -101,30 +184,30 @@
         if(!result.data?.port) return alert('找不到端口')
         this.port = result.data.port
         this.domRoomNumInput.remove()
-        this.domEnterRoom.onclick = this.back
+        this.domEnterRoom.onclick = this.back.bind(this)
         this.domEnterRoom.innerText = this.port
-        this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile)
-      }
-      back = () => {
+        this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
+      },
+      back() {
         this.domRoomNumInput = document.createElement('input')
         this.domRoomNumInput.setAttribute('type', 'text')
         this.domRoomNumInput.classList.add('room_number_input')
         this.domEnterRoom.innerText = '进入房间'
-        this.domEnterRoom.onclick = this.enter
+        this.domEnterRoom.onclick = this.enter.bind(this)
         this.domContentWrap.parentNode.insertBefore(this.domRoomNumInput, this.domContentWrap)
         this.domRoomNumInput.focus()
-      }
-      receiveFile = ({data}) => {
+      },
+      receiveFile({data}) {
         const res = JSON.parse(data)
         const fileEvents = {
-          start: this.startStoreFile,
-          msg: this.storeFile,
-          end: this.finishStoreFile
+          start: this.startStoreFile.bind(this),
+          msg: this.storeFile.bind(this),
+          end: this.finishStoreFile.bind(this)
         }
         fileEvents[res.state]?.({sign: res.id, data: res})
-      }
-      files = {}
-      startStoreFile = ({sign, data}) => {
+      },
+      files: {},
+      startStoreFile({sign, data}) {
         this.domContentWrap.innerHTML = ''
         // 清理内存
         this.files = {}
@@ -140,13 +223,13 @@
         this.domFileNameText.innerText = `0%\n` + data.name
         this.domFileName.appendChild(this.domFileNameText)
         this.domContentWrap.appendChild(this.domFileName)
-      }
-      storeFile = ({sign, data}) => {
+      },
+      storeFile({sign, data}) {
         this.files[sign].push(data)
         this.domFileName.style.background = `linear-gradient(90deg, #000 ${data.ind/data.total * 100}%, #fff ${data.ind/data.total * 100 + 10}%)`
         this.domFileNameText.innerText = `${(data.ind/data.total * 100).toFixed(2)}%\n` + data.name
-      }
-      finishStoreFile = ({sign, data}) => {
+      },
+      finishStoreFile({sign, data}) {
         this.files[sign].sort((a, b) => a.ind - b.ind)
         const url = this.files[sign].map(chunk => chunk.content).join('')
         const name = sign
@@ -157,12 +240,10 @@
         }
         this.downLoadBtn.onclick = downloadFile.bind(this, {url, name})
         this.domContentWrap.appendChild(this.downLoadBtn)
-        // downloadFile({url, name})
-      }
+      },
       
     }
-
-    new Behavior()
+    behavior.init()
 
     const downloadFile = ({url, name}) => {
       const a = document.createElement('a')
