@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body{
+      min-height: 100vh;
+      padding: 10px;
+      margin: 0;
+      box-sizing: border-box;
+      background: 100% 100% / 200px 200px  no-repeat url('https://img.zcool.cn/community/01b5ec5bdb4003a80121ab5d810355.gif'),
+      0% 0% / 360px 200px  no-repeat url('https://www.haoy99.com/FileUpload/2018-11/PNGTou_Ming_Bei_Jing-085016_115.png');
+    }
+    .link_ball{
+      display: inline-block;
+      width: 80px;
+      line-height: 80px;
+      background-color: #ddd;
+      border-radius: 50%;
+      margin: 20px;
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .back_arrow{
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      font-size: 32px;
+      background: center / contain url('https://ts2.cn.mm.bing.net/th?id=OIP-C.1zMo-77F0KNEbklTzOledQHaEo&w=316&h=197');
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      cursor: pointer;
+    }
+    .room_number_input{
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 18px;
+    }
+    .file_name_wrap{
+      border-radius: 6px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+    .file_name_text{
+      display: inline-block;
+      width: 88%;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #fff;
+      mix-blend-mode: difference;
+    }
+    button{
+      padding: 4px 20px;
+      background-color: #f5b4b4;
+      border: none;
+      border-radius: 6px;
+      box-shadow: 0 5px 5px #fbcbcb;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div style="width: 300px;padding: 10px;margin: 240px auto;text-align: center;">
+    <div class="link_ball enter_room" style="background: linear-gradient(#ffdde1, #ee9ca7);">进入房间</div>
+    <input type="text" class="room_number_input" autofocus />
+    <div class="content_wrap"></div>
+  </div>
+  <a class="back_arrow" href="/">
+    back ➜
+  </a>
+
+  <script>
+    class Behavior {
+      constructor() {
+        this.init()
+      }
+      init() {
+        this.domEnterRoom = document.querySelector('.enter_room')
+        this.domRoomNumInput = document.querySelector('.room_number_input')
+        this.domContentWrap = document.querySelector('.content_wrap')
+        this.domEnterRoom.onclick = this.enter
+        onbeforeunload = () => {
+          this.SSE?.close()
+        }
+      }
+      enter = async () => {
+        if (!this.domRoomNumInput.value) return
+        const result = await fetch('/receive/enter', {
+          method: 'POST',
+          body: JSON.stringify({port: this.domRoomNumInput.value})
+        }).then(res => res.json())
+        if(!result.data?.port) return alert('找不到端口')
+        this.port = result.data.port
+        this.domRoomNumInput.remove()
+        this.domEnterRoom.onclick = this.back
+        this.domEnterRoom.innerText = this.port
+        this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile)
+      }
+      back = () => {
+        this.domRoomNumInput = document.createElement('input')
+        this.domRoomNumInput.setAttribute('type', 'text')
+        this.domRoomNumInput.classList.add('room_number_input')
+        this.domEnterRoom.innerText = '进入房间'
+        this.domEnterRoom.onclick = this.enter
+        this.domContentWrap.parentNode.insertBefore(this.domRoomNumInput, this.domContentWrap)
+        this.domRoomNumInput.focus()
+      }
+      receiveFile = ({data}) => {
+        const res = JSON.parse(data)
+        const fileEvents = {
+          start: this.startStoreFile,
+          msg: this.storeFile,
+          end: this.finishStoreFile
+        }
+        fileEvents[res.state]?.({sign: res.id, data: res})
+      }
+      files = {}
+      startStoreFile = ({sign, data}) => {
+        this.domContentWrap.innerHTML = ''
+        // 清理内存
+        this.files = {}
+        this.files[sign] = []
+        if (!this.domFileName) {
+          this.domFileName = document.createElement('div')
+          this.domFileNameText = document.createElement('span')
+          this.domFileName.classList.add('file_name_wrap')
+          this.domFileNameText.classList.add('file_name_text')
+        }
+        
+        this.domFileName.style.background = 'linear-gradient(90deg, #000 0, #fff 10%)'
+        this.domFileNameText.innerText = `0%\n` + data.name
+        this.domFileName.appendChild(this.domFileNameText)
+        this.domContentWrap.appendChild(this.domFileName)
+      }
+      storeFile = ({sign, data}) => {
+        this.files[sign].push(data)
+        this.domFileName.style.background = `linear-gradient(90deg, #000 ${data.ind/data.total * 100}%, #fff ${data.ind/data.total * 100 + 10}%)`
+        this.domFileNameText.innerText = `${(data.ind/data.total * 100).toFixed(2)}%\n` + data.name
+      }
+      finishStoreFile = ({sign, data}) => {
+        this.files[sign].sort((a, b) => a.ind - b.ind)
+        const url = this.files[sign].map(chunk => chunk.content).join('')
+        const name = sign
+        this.domSendBtn?.remove()
+        if (!this.downLoadBtn) {
+          this.downLoadBtn = document.createElement('button')
+          this.downLoadBtn.innerText = '下载'
+        }
+        this.downLoadBtn.onclick = downloadFile.bind(this, {url, name})
+        this.domContentWrap.appendChild(this.downLoadBtn)
+        // downloadFile({url, name})
+      }
+      
+    }
+
+    new Behavior()
+
+    const downloadFile = ({url, name}) => {
+      const a = document.createElement('a')
+      const objUrl = URL.createObjectURL(blobToFile(dataURLtoBlob(url), name))// 超大文件需要这个，不然很卡
+      a.setAttribute('href', objUrl)
+      a.setAttribute('download', 'cp_' + name)
+      a.setAttribute('target', '_blank')
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(objUrl)
+    }
+
+    // 将base64转换为blob
+    function dataURLtoBlob(dataurl) {
+      let arr = dataurl.split(","),
+        mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]),
+        n = bstr.length,
+        u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
+    // 将blob转换为file
+    function blobToFile(theBlob, fileName) {
+      theBlob.lastModifiedDate = new Date();
+      theBlob.name = fileName;
+      return theBlob;
+    }
+
+
+
+    class SSEHandler{
+      constructor(url, cb) {
+        this.SSE = new EventSource(url)
+        this.SSE.onmessage = cb
+        this.SSE.onerror = console.log
+      }
+      close() {
+        this.SSE.close()
+        this.SSE = null
+      }
+    }
+  </script>
+</body>
+</html>
