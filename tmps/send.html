@@ -193,7 +193,6 @@
 
 
     const Behavior = {
-      copy: true,
       domCreateRoom: document.querySelector('.create_room'),
       domContentWrap: document.querySelector('.content_wrap'),
       domFile: null,
@@ -224,18 +223,14 @@
           this.domFile.type = 'file'
           this.domCreateRoom.onclick = () => this.domFile.click()
           this.domFile.onchange = this.selectFile.bind(this)
-          if(this.copy) {
-            this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
-          }
+          this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
         })
       },
       selectFile(e) {
         // console.log(e)
         this.domContentWrap.innerHTML = ''
         if (!this.domFile.files[0]) return
-        if(this.copy) {
-          this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this)))
-        }
+        this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this)))
         if (!this.domSendBtn) {
           this.domSendBtn = document.createElement('button')
           this.domSendBtn.innerText = '发送'
@@ -271,11 +266,6 @@
             return alert('传输错误，请重试')
           } else {
             this.tmpFiles[chunks[0].id][i].loaded = true
-            if(this.copy) continue
-            this.domSendBtn?.remove()
-            curInd = chunks[i].ind || curInd
-            this.domFileName.style.background = `linear-gradient(90deg, #000 ${curInd/chunks[i].total * 100}%, #fff ${curInd/chunks[i].total * 100 + 10}%)`
-            this.domFileNameText.innerText = `${(curInd/chunks[i].total * 100).toFixed(2)}%\n` + chunks[0].name
           }
         }
       },
