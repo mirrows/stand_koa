@@ -49,6 +49,7 @@ const Listeners = {
         line: [{id: this.curId, fn: cb}],
       }
     }
+    console.log(this.listeners)
     return this.curId++
   },
   async emit(sign, ...args) {

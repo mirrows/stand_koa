@@ -190,8 +190,11 @@
         this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
       },
       back() {
+        this.SSE?.close()
+        this.domContentWrap.innerHTML = ''
         this.domRoomNumInput = document.createElement('input')
         this.domRoomNumInput.setAttribute('type', 'text')
+        this.domRoomNumInput.setAttribute('value', this.port)
         this.domRoomNumInput.classList.add('room_number_input')
         this.domEnterRoom.innerText = '进入房间'
         this.domEnterRoom.onclick = this.enter.bind(this)
@@ -209,6 +212,7 @@
       },
       files: {},
       startStoreFile({sign, data}) {
+        this.domEnterRoom.onclick = null
         this.domContentWrap.innerHTML = ''
         // 清理内存
         this.files = {}
@@ -241,6 +245,7 @@
         }
         this.downLoadBtn.onclick = downloadFile.bind(this, {url, name})
         this.domContentWrap.appendChild(this.downLoadBtn)
+        this.domEnterRoom.onclick = this.back.bind(this)
       },
       
     }
