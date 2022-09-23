@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Send</title>
+  <link rel="icon" href="https://t.t-n.top/favicon.ico">
   <style>
     body{
       min-height: 100vh;
@@ -192,6 +193,7 @@
 
 
     const Behavior = {
+      copy: true,
       domCreateRoom: document.querySelector('.create_room'),
       domContentWrap: document.querySelector('.content_wrap'),
       domFile: null,
@@ -222,14 +224,18 @@
           this.domFile.type = 'file'
           this.domCreateRoom.onclick = () => this.domFile.click()
           this.domFile.onchange = this.selectFile.bind(this)
-          this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
+          if(this.copy) {
+            this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this))
+          }
         })
       },
       selectFile(e) {
         // console.log(e)
         this.domContentWrap.innerHTML = ''
         if (!this.domFile.files[0]) return
-        this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this)))
+        if(this.copy) {
+          this.SSE.SSE || (this.SSE = new SSEHandler(`/receive/file/${this.port}`, this.receiveFile.bind(this)))
+        }
         if (!this.domSendBtn) {
           this.domSendBtn = document.createElement('button')
           this.domSendBtn.innerText = '发送'
@@ -255,7 +261,7 @@
         const chunks = await sliceFile(this.domFile.files[0])
         this.tmpFiles || (this.tmpFiles = {})
         this.tmpFiles[chunks[0].id] = chunks
-        console.log(chunks)
+        let curInd = 0
         for(let i = 0; i < chunks.length; i++) {
           const data = await fetch(`/send/uploadFile/${this.port}`, {
             method: 'POST',
@@ -265,6 +271,11 @@
             return alert('传输错误，请重试')
           } else {
             this.tmpFiles[chunks[0].id][i].loaded = true
+            if(this.copy) continue
+            this.domSendBtn?.remove()
+            curInd = chunks[i].ind || curInd
+            this.domFileName.style.background = `linear-gradient(90deg, #000 ${curInd/chunks[i].total * 100}%, #fff ${curInd/chunks[i].total * 100 + 10}%)`
+            this.domFileNameText.innerText = `${(curInd/chunks[i].total * 100).toFixed(2)}%\n` + chunks[0].name
           }
         }
       },

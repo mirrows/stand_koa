@@ -7,7 +7,7 @@ const static = require('koa-static')
 
 const KoaApp = {
   config: {
-    port: 8858,
+    port: 8000,
     app: new Koa()
   },
   createApp({ port } = this.config) {
